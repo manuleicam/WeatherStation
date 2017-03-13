@@ -1,0 +1,5 @@
+https://www.tutorialspoint.com/sqlite/sqlite_installation.htm
+
+podes ter de usar o comando "gem install sqlite3" tens de ter o DEVKIT instalado
+
+Alguma duvida pergunta

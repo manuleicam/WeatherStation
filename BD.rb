@@ -8,7 +8,7 @@ db = SQLite3::Database.new "weatherStation.db"
 
 #Create Table
 stm = db.prepare "CREATE TABLE IF NOT EXISTS leituras (
-		IDCLIENTE INT PRIMARY KEY NOT NULL,
+		IDCLIENTE INT NOT NULL,
 		IDSENSOR INT NOT NULL,
 		VALUE INT NOT NULL,
 		GPSX INT NOT NULL,

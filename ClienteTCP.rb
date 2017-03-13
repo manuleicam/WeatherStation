@@ -56,11 +56,11 @@ class Client
 			sleep(1)
 			readTemp
 			time1 = Time.now
-			#puts "Current Time : " + time1.to_s
+			puts "Current Time temp : " + time1.to_s
 			@s.puts("1/#{@temperatura},#{time1.inspect.to_s}")
 			#@s.puts ("Current Time : #{time1.to_s} \n")
 			#@s.puts ("A temperatura é #{@temperatura} \n")
-			sleep(5)
+			sleep(2)
 		end
 	end
 
@@ -69,15 +69,15 @@ class Client
 			readAco
 			time2 = Time.now
 			puts "Current Time : " + time2.to_s
-			@s.puts ("2/#{@acoustico},Current Time : #{time2.to_s}")
+			@s.puts ("2/#{@acoustico},#{time2.to_s}")
 			#@s.puts ("A acostica é #{@acoustico}")
-			sleep(2)
+			sleep(10)
 		end
 	end
 
 	def main
 		id = ARGV
-		@s.puts "O cliente de ID #{id[0]} acabou de se conectar"
+		@s.puts "#{id[0]}"
 		leituras
 	end
 
