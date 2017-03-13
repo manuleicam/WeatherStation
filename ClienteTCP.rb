@@ -29,32 +29,37 @@ class Client
   	def leituras()
   		t1=Thread.new{temp}
 		t2=Thread.new{aco}
-		t3=Thread.new{fim}
+	#	t3=Thread.new{fim}
 		t1.join
 		t2.join
-		t3.join
+	#	t3.join
 	end
 
-	def fim
-		while user_input = gets.chomp # loop while getting user input
-  			case user_input
-  			when "1"
-    			puts "First response"
-    			break # make sure to break so you don't ask again
-  			when "2"
-    			puts "Second response"
-    			break # and again
-  			else
-    			puts "Please select either 1 or 2"
-    			print prompt # print the prompt, so the user knows to re-enter input
-  			end
-		end
-	end
+	#def fim
+	#	while user_input = gets.chomp # loop while getting user input
+  	#		case user_input
+  	#		when "1"
+    #			puts "First response"
+    #			break # make sure to break so you don't ask again
+  	#		when "2"
+    #			puts "Second response"
+    #			break # and again
+  	#		else
+    #			puts "Please select either 1 or 2"
+    #			print prompt # print the prompt, so the user knows to re-enter input
+  	#		end
+	#	end
+	#end
 
 	def temp
 		while true
+			sleep(1)
 			readTemp
-			@s.puts ("A temperatura é #{@temperatura} \n")
+			time1 = Time.now
+			#puts "Current Time : " + time1.to_s
+			@s.puts("1/#{@temperatura},#{time1.inspect.to_s}")
+			#@s.puts ("Current Time : #{time1.to_s} \n")
+			#@s.puts ("A temperatura é #{@temperatura} \n")
 			sleep(5)
 		end
 	end
@@ -62,15 +67,17 @@ class Client
 	def aco
 		while true
 			readAco
-			@s.puts ("A acostica é #{@acoustico} \n")
-			sleep(5)
+			time2 = Time.now
+			puts "Current Time : " + time2.to_s
+			@s.puts ("2/#{@acoustico},Current Time : #{time2.to_s}")
+			#@s.puts ("A acostica é #{@acoustico}")
+			sleep(2)
 		end
 	end
 
 	def main
 		id = ARGV
 		@s.puts "O cliente de ID #{id[0]} acabou de se conectar"
-		@s.puts "\n"
 		leituras
 	end
 
