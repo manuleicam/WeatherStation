@@ -83,7 +83,7 @@ class Client
   def main
     id = ARGV
     puts "#{id[0]} --- #{id[1]}"
-    #@s.puts "#{id[0]} --- #{id[1]}"
+    @s.puts "#{id[0]}/#{id[1]}"
     leituras
   end
 
