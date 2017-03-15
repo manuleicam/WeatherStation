@@ -1,8 +1,7 @@
 require 'socket' # Sockets are in standard library
 
 class Client
-  attr_reader :temperatura, :acoustico, :s
-  @@counter = 0
+  attr_reader :temperatura, :acoustico, :s, :idCliente
 
 
   def initialize()
@@ -12,8 +11,6 @@ class Client
     @X = 0.0
     @Y = 0.0
     @seconds = 1
-    @@counter = @@counter + 1
-    @id_cliente = @@counter
   end
 
   def readTemp
@@ -66,15 +63,15 @@ class Client
       if (@seconds <5)
         readAco
         time2 = Time.now
-        @s.puts ("2/#{@acoustico},#{time2.to_s}")
+        @s.puts ("2/#{@acoustico},#{time2.to_s},")
         @seconds = @seconds + 1
       else
         readAco
         time2 = Time.now
-        @s.puts ("2/#{@acoustico},#{time2.to_s}")
+        @s.puts ("2/#{@acoustico},#{time2.to_s},")
         readTemp
         time1 = Time.now
-        @s.puts("1/#{@temperatura},#{time1.inspect.to_s}")
+        @s.puts("1/#{@temperatura},#{time1.inspect.to_s},")
         @seconds = 1
       end
     end
@@ -82,8 +79,11 @@ class Client
 
   def main
     id = ARGV
-    puts "#{id[0]} --- #{id[1]}"
-    #@s.puts "#{id[0]} --- #{id[1]}"
+    #puts "#{id[0]} --- #{id[1]}"
+    @s.puts "#{id[0]}/#{id[1]}/"
+    id = @s.gets
+    puts "A conexão foi feita com sucesso e o seu ID é #{id}"
+    @idCliente = id
     leituras
   end
 

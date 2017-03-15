@@ -12,36 +12,89 @@ class Server
 	def starts
 		loop {                         # Servers run forever
 		    Thread.start(@server.accept) do |client|
-		    	@cliente=client 		
-		    	id = @cliente.get		#recebe o ID do cliente
-		    	puts id
-				insertBD(id)
+		    	@cliente=client 
+		    	gps = @cliente.gets
+		    	#puts "#{gps}"
+		    	lat,lon = gps.split("/")
+		    	#puts "#{lat} -- #{lon}"
+		    	id = getID(lat,lon)
+		    	puts "O Cliente de ID #{id} e posição #{lat} #{lon} encontra-se neste momento conectado"
+		    	#puts "#{id} + pça"
+		    	#id = @cliente.get		#recebe o ID do cliente
+		    	#puts id
+				insertBD(id,lat,lon)
 		      	@cliente.close          # Disconnect from the client
 		    end
 		}
 	end
 
-	def insertBD(id)
+	def getID(lat,lon)
+		stm = @bd.prepare "Select count(*) From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
+		rs = stm.execute
+		row = rs.next
+		#puts "#{row[0]}+1"
+		if row[0] >= 1 then
+			stm = @bd.prepare "Select IDCLIENTE From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
+			rs = stm.execute
+			row = rs.next
+			id = row.join "\s"
+			#puts "#{id}"
+			@cliente.puts "#{id}"
+        	#puts id
+        else
+        	stm = @bd.prepare "Select max(IDCLIENTE) From leituras;"
+			rs = stm.execute
+			row = rs.next
+			#puts row
+			#puts "#{row[0]}"
+			id = row[0] + 1
+			#puts "#{id}"
+			@cliente.puts "#{id}"
+			#row += 1
+			#id = row.join "\s"
+			#id += 1
+			#puts row
+        end
+    	return id
+
+	end
+
+	def insertBD(id,lat,lon)
 		while true
 			s = @cliente.gets
 			tipoLeitura,leitura = s.split("/")
 			#puts tipoLeitura
 			#puts leitura
 			if tipoLeitura == '1' then
-				bdTemp(leitura, id)
+				bdTemp(leitura, id, lat, lon)
 			else
-				#bdAco
+				bdAco(leitura,id, lat, lon)
 				#puts "aco"
 			end
 		end
 	end
 
-	def bdTemp(leitura, id)
+	def bdTemp(leitura, id, lat, lon)
 		temp,timezone = leitura.split(",")
 		tipo = 2
-		gps = 5
+		#id << ",ola"
+		#puts id
+		#puts tipo
+		#puts lat
+		#puts lon
 		@bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
-			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, gps, gps, timezone)
+			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat, lon, timezone)
+	end
+
+	def bdAco(leitura,id, lat, lon)
+		temp,timezone = leitura.split(",")
+		tipo = 1
+		#puts id
+		#puts tipo
+		#puts lat
+		#puts lon
+		@bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
+			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat, lon, timezone)
 	end
 
 	#def funcs
