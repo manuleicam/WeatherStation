@@ -57,11 +57,19 @@ class Server
 			id = row.join "\s"
 			@cliente.puts "#{id},"
         else
-        	stm = @bd.prepare "Select max(IDCLIENTE) From leituras;"
+        	stm = @bd.prepare "SELECT EXISTS(SELECT * FROM leituras);"
 			rs = stm.execute
 			row = rs.next
-			id = row[0] + 1
-			@cliente.puts "#{id},"
+			if row[0] == 1
+        		stm = @bd.prepare "Select max(IDCLIENTE) From leituras;"
+				rs = stm.execute
+				row = rs.next
+				id = row[0] + 1
+				@cliente.puts "#{id},"
+			else
+				id = 1
+				@cliente.puts "#{id},"
+			end
         end
     	return id
 
@@ -74,7 +82,7 @@ class Server
 			if tipoLeitura == '1' then
 				bdTemp(leitura, id, lat, lon)				#insere uma leitura de temperatura
 			elsif tipoLeitura == '2' then
-				bdAco(leitura,id, lat, lon)				#insere uma leitura de acustica
+				bdAco(leitura,id, lat, lon)					#insere uma leitura de acustica
 			else
 				id_remove, n_of_reads = leitura.split(",")
 				@clients_connected.delete(id_remove)		#Remove o ID que se desligou do array
@@ -87,14 +95,14 @@ class Server
 		temp,timezone = leitura.split(",")
 		tipo = 2
 		@bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
-			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat, lon, timezone)
+			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
 	end
 
 	def bdAco(leitura,id, lat, lon)							#insere uma leitura de acustica
 		temp,timezone = leitura.split(",")
 		tipo = 1
 		@bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
-			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat, lon, timezone)
+			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
 	end
 
 	#def funcs
