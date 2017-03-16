@@ -2,7 +2,7 @@ require 'socket' # Sockets are in standard library
 
 class Client
   attr_reader :temperatura, :acoustico, :s, :idCliente
-
+  @disconnect_flag = false
 
   def initialize()
     @temperatura = 0.0
@@ -11,14 +11,17 @@ class Client
     @X = 0.0
     @Y = 0.0
     @seconds = 1
+    @n_of_reads = 0
   end
 
   def readTemp
     @temperatura = rand(-10..50)
+    @n_of_reads = @n_of_reads + 1
   end
 
   def readAco
     @acoustico = rand(0..50)
+    @n_of_reads = @n_of_reads + 1
   end
 
   def getTemp
@@ -41,24 +44,9 @@ class Client
     #	t3.join
   end
 
-  #def fim
-  #	while user_input = gets.chomp # loop while getting user input
-  #		case user_input
-  #		when "1"
-  #			puts "First response"
-  #			break # make sure to break so you don't ask again
-  #		when "2"
-  #			puts "Second response"
-  #			break # and again
-  #		else
-  #			puts "Please select either 1 or 2"
-  #			print prompt # print the prompt, so the user knows to re-enter input
-  #		end
-  #	end
-  #end
-
   def read
-    while true
+    #while true
+    loop do
       sleep(1)
       if (@seconds <5)
         readAco
@@ -73,15 +61,20 @@ class Client
         time1 = Time.now
         @s.puts("1/#{@temperatura},#{time1.inspect.to_s},")
         @seconds = 1
+        @disconnect_flag = true              ## PARA TESTAR A SAIDA DO CLIENTE
+        #puts "#{@n_of_reads}, #{@disconnect_flag}"
+      end
+      if @disconnect_flag == true
+        @s.puts "3/#{@idCliente}, #{@n_of_reads},"
+        break
       end
     end
   end
 
   def main
     id = ARGV
-    #puts "#{id[0]} --- #{id[1]}"
     @s.puts "#{id[0]}/#{id[1]}/"
-    id = @s.gets
+    id,n = @s.gets.split(",")
     puts "A conexão foi feita com sucesso e o seu ID é #{id}"
     @idCliente = id
     leituras
