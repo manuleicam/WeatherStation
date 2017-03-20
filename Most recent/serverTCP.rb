@@ -3,7 +3,7 @@ require 'sqlite3'
 
 class Server
   attr_reader :server, :cliente, :bd
-
+  @n_of_reads
 
   def initialize()
     @server = TCPServer.open(2000)
@@ -15,8 +15,8 @@ class Server
     puts("Cliente com o id #{id} connectado com localização #{lat} #{lon}")
   end
 
-  def client_disconnect(id, n_of_reads) #Print quando o cliente se desliga
-    puts("Cliente com o id #{id} desconectou-se e fez #{n_of_reads} leituras")
+  def client_disconnect(id) #Print quando o cliente se desliga
+    puts("Cliente com o id #{id} desconectou-se e fez #{@n_of_reads} leituras")
   end
 
 
@@ -30,18 +30,15 @@ class Server
     Thread.new {
       loop {# Servers run forever
         Thread.start(@server.accept) do |client|
+          @n_of_reads = 0
           @cliente=client
           gps = @cliente.gets
           lat, lon = gps.split("/")
           id = getID(lat, lon)
-          @clients_connected.insert(id)
-
-          client_connected(id, lat, lon) #Print da conexão de um cliente
-
-          @clients_connected[@clients_connected.size] = id.to_i #adiciona o cliente que se conectou ao array (id em inteiro)
+          @clients_connected << id
+          client_connected(id,lat,lon) #Print da conexão de um cliente
           #puts "#{@clients_connected}"
           lerMensagem(id, lat, lon) #O servidor descodifica a mensagem
-
         end
       }
     }
@@ -49,11 +46,22 @@ class Server
 
   def getClients()
     puts "Lista de Clientes conectados"
+    puts "#{@clients_connected}"
     for id_client in @clients_connected do
       stm = @bd.prepare "Select distinct GPSX,GPSY From leituras Where IDCLIENTE = #{id_client}"
       rs = stm.execute
       row = rs.next
-      puts "GpsX: #{row[0][10]} e GPSY : #{row[0][1]}"
+      puts "GpsX: #{row[0][0]} e GPSY : #{row[0][1]}"
+    end
+  end
+
+  def getSensorValues(id_client,id_sensor)
+    puts "Valores Sensores"
+    stm = @bd.prepare "Select Value From leituras Where IDCLIENTE = #{id_client} and IDSENSOR = #{id_sensor}"
+    rs = stm.execute
+    while(rs.next)
+      row = rs.next
+      puts "IDSENSOR:#{id_sensor}, Valor #{row[0][0]}"
     end
   end
 
@@ -97,7 +105,7 @@ class Server
       else
         id_remove, n_of_reads = leitura.split(",")
         @clients_connected.delete(id_remove) #Remove o ID que se desligou do array
-        client_disconnect(id_remove, n_of_reads) #Print quando o cliente se desliga
+        client_disconnect(id_remove) #Print quando o cliente se desliga
       end
     end
   end
@@ -107,6 +115,7 @@ class Server
     tipo = 2
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
+    @n_of_reads = @n_of_reads + 1
   end
 
   def bdAco(leitura, id, lat, lon) #insere uma leitura de acustica
@@ -114,6 +123,7 @@ class Server
     tipo = 1
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
+    @n_of_reads = @n_of_reads + 1
   end
 
   #def funcs
@@ -127,5 +137,3 @@ class Server
     #t2.join
   end
 end
-s = Server.new()
-s.main

@@ -71,11 +71,12 @@ class Client
   def disconnect
     @s.puts "3/#{@idCliente}, #{@n_of_reads},"
     @disconnect_flag = true
+    puts("#{@n_of_reads}")
     s.close
   end
 
   def main
-    @s.puts "#{@Y}/#{@X}/"
+    @s.puts "#{@X}/#{@Y}/"
     id, n = @s.gets.split(",")
     puts "A conexão foi feita com sucesso e o seu ID é #{id}"
     @idCliente = id
@@ -83,6 +84,3 @@ class Client
   end
 
 end
-
-c = Client.new()
-c.main
