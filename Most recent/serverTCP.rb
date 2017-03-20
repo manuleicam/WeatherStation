@@ -44,6 +44,7 @@ class Server
     }
   end
 
+
   def getClients()
     puts "Lista de Clientes conectados"
     puts "#{@clients_connected}"
@@ -51,7 +52,7 @@ class Server
       stm = @bd.prepare "Select distinct GPSX,GPSY From leituras Where IDCLIENTE = #{id_client}"
       rs = stm.execute
       row = rs.next
-      puts "GpsX: #{row[0][0]} e GPSY : #{row[0][1]}"
+      puts "GpsX: #{row[0]} e GPSY : #{row[1]}"
     end
   end
 
