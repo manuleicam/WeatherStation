@@ -1,4 +1,4 @@
-require 'socket'
+require 'socket' 
 require 'sqlite3'
 
 class Server
@@ -31,14 +31,14 @@ class Server
       loop {# Servers run forever
         Thread.start(@server.accept) do |client|
           @n_of_reads = 0
-          @cliente=client
-          gps = @cliente.gets
+          #@cliente=client
+          gps = client.gets
           lat, lon = gps.split("/")
-          id = getID(lat, lon)
+          id = getID(lat, lon, client)
           @clients_connected << id
           client_connected(id,lat,lon) #Print da conexão de um cliente
           #puts "#{@clients_connected}"
-          lerMensagem(id, lat, lon) #O servidor descodifica a mensagem
+          lerMensagem(id, lat, lon, client) #O servidor descodifica a mensagem
         end
       }
     }
@@ -66,7 +66,7 @@ class Server
     end
   end
 
-  def getID(lat, lon)
+  def getID(lat, lon, client)
     stm = @bd.prepare "Select count(*) From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
     rs = stm.execute
     row = rs.next
@@ -75,7 +75,7 @@ class Server
       rs = stm.execute
       row = rs.next
       id = row.join "\s"
-      @cliente.puts "#{id},"
+      client.puts "#{id},"
     else
       stm = @bd.prepare "SELECT EXISTS(SELECT * FROM leituras);"
       rs = stm.execute
@@ -85,19 +85,19 @@ class Server
         rs = stm.execute
         row = rs.next
         id = row[0] + 1
-        @cliente.puts "#{id},"
+        client.puts "#{id},"
       else
         id = 1
-        @cliente.puts "#{id},"
+        client.puts "#{id},"
       end
     end
     return id
 
   end
 
-  def lerMensagem(id, lat, lon) #O servidor descodifica a mensagem
+  def lerMensagem(id, lat, lon, client) #O servidor descodifica a mensagem
     while true
-      s = @cliente.gets
+      s = client.gets
       tipoLeitura, leitura = s.split("/")
       if tipoLeitura == '1' then
         bdTemp(leitura, id, lat, lon) #insere uma leitura de temperatura
