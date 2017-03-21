@@ -1,14 +1,21 @@
 require 'socket' # Sockets are in standard library
 
 class Client
-  attr_reader :temperatura, :acoustico, :s, :idCliente
+  @temperatura
+  @acoustico
+  @clientSocket
+  @idCliente
+  @lat
+  @lon
+  @n_of_reads
+  @disconnect_flag
 
-  def initialize(x, y)
+  def initialize(lat, lon)
     @temperatura = 0.0
     @acoustico = 0.0
-    @s = TCPSocket.open('localhost', 2000)
-    @X = x
-    @Y = y
+    @clientSocket= TCPSocket.open('localhost', 2000)
+    @lat = lat
+    @lon = lon
     @seconds = 1
     @n_of_reads = 0
     @disconnect_flag = false
@@ -32,55 +39,48 @@ class Client
     @acoustico
   end
 
-  def setX(pos_x, pos_y)
-    @X=pos_x
-    @Y=pos_y
-  end
-
-  def leituras()
-    t1=Thread.new { read }
-    #	t3=Thread.new{fim}
-    t1.join
-    #	t3.join
+  def setX(lat, lon)
+    @lat=lat
+    @lon=lon
   end
 
   def read
+    t1=Thread.new { readSensors }
+    t1.join
+  end
 
+  def readSensors
     Thread.new {
       while (@disconnect_flag == false)
-            sleep(1)
+        sleep(1)
         if (@seconds <30)
           readAco
-          time2 = Time.now
-          @s.puts ("2/#{@acoustico},#{time2.to_s},")
+          @clientSocket.puts ("2/#{@acoustico},#{Time.now.to_s},")
           @seconds = @seconds + 1
         else
           readAco
-          time2 = Time.now
-          @s.puts ("2/#{@acoustico},#{time2.to_s},")
+          @clientSocket.puts ("2/#{@acoustico},#{Time.now.to_s},")
           readTemp
-          time1 = Time.now
-          @s.puts("1/#{@temperatura},#{time1.inspect.to_s},")
-          @seconds = 1 ## PARA TESTAR A SAIDA DO CLIENTE
-          #puts "#{@n_of_reads}, #{@disconnect_flag}"
+          @clientSocket.puts("1/#{@temperatura},#{Time.now.inspect.to_s},")
+          @seconds = 1
         end
       end
     }
   end
 
   def disconnect
-    @s.puts "3/#{@idCliente}, #{@n_of_reads},"
+    @clientSocket.puts "3/#{@idCliente}, #{@n_of_reads},"
     @disconnect_flag = true
     puts("#{@n_of_reads}")
-    s.close
+    @clientSocket.close
   end
 
-  def main
-    @s.puts "#{@X}/#{@Y}/"
-    id, n = @s.gets.split(",")
+  def connect
+    @clientSocket.puts "#{@lat}/#{@lon}/"
+    id, n = @clientSocket.gets.split(",")
     puts "A conexão foi feita com sucesso e o seu ID é #{id}"
     @idCliente = id
-    leituras
+    read
   end
 
 end

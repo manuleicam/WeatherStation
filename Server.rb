@@ -1,4 +1,4 @@
-require 'socket' 
+require 'socket'
 require 'sqlite3'
 require_relative 'BD'
 
@@ -27,20 +27,18 @@ class Server
     end
   end
 
-  def starts
+  def run
     b = BD.new
     b.createTable
     Thread.new {
       loop {# Servers run forever
         Thread.start(@server.accept) do |client|
           Thread.current['@n_of_reads'] = 0
-          #@cliente=client
           gps = client.gets
           lat, lon = gps.split("/")
           id = getID(lat, lon, client)
           @clients_connected << id
           client_connected(id,lat,lon) #Print da conexão de um cliente
-          #puts "#{@clients_connected}"
           lerMensagem(id, lat, lon, client) #O servidor descodifica a mensagem
         end
       }
@@ -55,7 +53,7 @@ class Server
       stm = @bd.prepare "Select distinct GPSX,GPSY From leituras Where IDCLIENTE = #{id_client}"
       rs = stm.execute
       row = rs.next
-      puts "GpsX: #{row[0]} e GPSY : #{row[1]}"
+      puts "IDCLIENT: #{id_client} GpsX: #{row[0]} e GPSY : #{row[1]}"
     end
   end
 
@@ -69,6 +67,7 @@ class Server
     end
   end
 
+=begin
   def getID(lat, lon, client)
     stm = @bd.prepare "Select count(*) From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
     rs = stm.execute
@@ -95,7 +94,29 @@ class Server
       end
     end
     return id
+  end
+=end
 
+  def getID(lat, lon, client)
+    max = 0
+    stm = @bd.prepare "Select distinct IDCLIENTE, GPSX, GPSY From leituras;"
+    rs = stm.execute
+    while (row = rs.next) do
+        if max < row[0] then max = row[0] end
+        if (row[1] == lat.to_i and row[2] == lon.to_i) then
+          id = row[0]
+          client.puts "#{id},"
+          return id
+        end
+    end
+    #if max == 0 then 
+    #  client.puts "1,"
+    #  return 1
+    #else
+    max = max + 1
+    client.puts "#{max},"
+    return max
+    #end
   end
 
   def lerMensagem(id, lat, lon, client) #O servidor descodifica a mensagem
@@ -130,14 +151,8 @@ class Server
     Thread.current['@n_of_reads'] = Thread.current['@n_of_reads'] + 1
   end
 
-  #def funcs
-
-  #end
-
-  def main
-    t1=Thread.new { starts }
-    #t2=Thread.new{funcs}
+  def start
+    t1=Thread.new { run }
     t1.join
-    #t2.join
   end
 end

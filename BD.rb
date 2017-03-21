@@ -5,6 +5,7 @@ class BD
 
 	def initialize()
 		@db = SQLite3::Database.new "weatherStation.db"
+		@db
 	end
 	#db =  SQLite3::Database.open 'WeatherStation.db'
 	#db.execute 'drop table if exists weatherStation'
@@ -39,6 +40,3 @@ class BD
 	#    
 	#puts row.join "\s"
 end
-
-b = BD.new()
-b.createTable
