@@ -67,36 +67,6 @@ class Server
     end
   end
 
-=begin
-  def getID(lat, lon, client)
-    stm = @bd.prepare "Select count(*) From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
-    rs = stm.execute
-    row = rs.next
-    if row[0] >= 1 then
-      stm = @bd.prepare "Select IDCLIENTE From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
-      rs = stm.execute
-      row = rs.next
-      id = row.join "\s"
-      client.puts "#{id},"
-    else
-      stm = @bd.prepare "SELECT EXISTS(SELECT * FROM leituras);"
-      rs = stm.execute
-      row = rs.next
-      if row[0] == 1
-        stm = @bd.prepare "Select max(IDCLIENTE) From leituras;"
-        rs = stm.execute
-        row = rs.next
-        id = row[0] + 1
-        client.puts "#{id},"
-      else
-        id = 1
-        client.puts "#{id},"
-      end
-    end
-    return id
-  end
-=end
-
   def getID(lat, lon, client)
     max = 0
     stm = @bd.prepare "Select distinct IDCLIENTE, GPSX, GPSY From leituras;"
@@ -109,14 +79,9 @@ class Server
           return id
         end
     end
-    #if max == 0 then 
-    #  client.puts "1,"
-    #  return 1
-    #else
     max = max + 1
     client.puts "#{max},"
     return max
-    #end
   end
 
   def lerMensagem(id, lat, lon, client) #O servidor descodifica a mensagem
@@ -137,7 +102,7 @@ class Server
 
   def bdTemp(leitura, id, lat, lon) #insere uma leitura de temperatura
     temp, timezone = leitura.split(",")
-    tipo = 2
+    tipo = 1
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
     Thread.current['@n_of_reads'] = Thread.current['@n_of_reads'] + 1
@@ -145,7 +110,7 @@ class Server
 
   def bdAco(leitura, id, lat, lon) #insere uma leitura de acustica
     temp, timezone = leitura.split(",")
-    tipo = 1
+    tipo = 2
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
     Thread.current['@n_of_reads'] = Thread.current['@n_of_reads'] + 1
