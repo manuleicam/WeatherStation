@@ -9,6 +9,8 @@ class Client
   @lon
   @n_of_reads
   @disconnect_flag
+  @t1
+  @t2
 
   def initialize(lat, lon)
     @temperatura = 0.0
@@ -45,12 +47,12 @@ class Client
   end
 
   def read
-    t1=Thread.new { readSensors }
-    t1.join
+    @t1=Thread.new { readSensors }
+    @t1.join
   end
 
   def readSensors
-    Thread.new {
+    @t2 = Thread.new {
       while (@disconnect_flag == false)
         sleep(1)
         if (@seconds <30)
@@ -71,8 +73,8 @@ class Client
   def disconnect
     @clientSocket.puts "3/#{@idCliente}, #{@n_of_reads},"
     @disconnect_flag = true
-    puts("#{@n_of_reads}")
     @clientSocket.close
+    Thread.exit
   end
 
   def connect

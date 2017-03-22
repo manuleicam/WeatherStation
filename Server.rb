@@ -45,6 +45,10 @@ class Server
     }
   end
 
+  def stop
+    Thread.exit
+  end
+
 
   def getClients()
     puts "Lista de Clientes conectados"
@@ -67,32 +71,20 @@ class Server
   end
 
   def getID(lat, lon, client)
-    stm = @bd.prepare "Select count(*) From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
+    max = 0
+    stm = @bd.prepare "Select distinct IDCLIENTE, GPSX, GPSY From leituras;"
     rs = stm.execute
-    row = rs.next
-    if row[0] >= 1 then
-      stm = @bd.prepare "Select IDCLIENTE From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
-      rs = stm.execute
-      row = rs.next
-      id = row.join "\s"
-      client.puts "#{id},"
-    else
-      stm = @bd.prepare "SELECT EXISTS(SELECT * FROM leituras);"
-      rs = stm.execute
-      row = rs.next
-      if row[0] == 1
-        stm = @bd.prepare "Select max(IDCLIENTE) From leituras;"
-        rs = stm.execute
-        row = rs.next
-        id = row[0] + 1
-        client.puts "#{id},"
-      else
-        id = 1
-        client.puts "#{id},"
-      end
+    while (row = rs.next) do
+        if max < row[0] then max = row[0] end
+        if (row[1] == lat.to_i and row[2] == lon.to_i) then
+          id = row[0]
+          client.puts "#{id},"
+          return id
+        end
     end
-    return id
-
+    max = max + 1
+    client.puts "#{max},"
+    return max
   end
 
   def lerMensagem(id, lat, lon, client) #O servidor descodifica a mensagem
@@ -107,13 +99,15 @@ class Server
         id_remove, n_of_reads = leitura.split(",")
         @clients_connected.delete(id_remove.to_i) #Remove o ID que se desligou do array
         client_disconnect(id_remove) #Print quando o cliente se desliga
+        #Thread.list.each{|t| p t}
+        Thread.kill(client)
       end
     end
   end
 
   def bdTemp(leitura, id, lat, lon) #insere uma leitura de temperatura
     temp, timezone = leitura.split(",")
-    tipo = 2
+    tipo = 1
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
     Thread.current['@n_of_reads'] = Thread.current['@n_of_reads'] + 1
@@ -121,7 +115,7 @@ class Server
 
   def bdAco(leitura, id, lat, lon) #insere uma leitura de acustica
     temp, timezone = leitura.split(",")
-    tipo = 1
+    tipo = 2
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
     Thread.current['@n_of_reads'] = Thread.current['@n_of_reads'] + 1
