@@ -59,29 +59,40 @@ class Server
 
   def getSensorValues(id_client,id_sensor)
     puts "Valores Sensores"
-    stm = @bd.prepare "Select Value From leituras Where IDCLIENTE = #{id_client} and IDSENSOR = #{id_sensor}"
+    stm = @bd.prepare "Select Value From leituras Where IDCLIENTE = #{id_client} and IDSENSOR = #{id_sensor};"
     rs = stm.execute
-    while(rs.next)
-      row = rs.next
-      puts "IDSENSOR:#{id_sensor}, Valor #{row[0][0]}"
+    while(row=rs.next)
+      puts "IDSENSOR:#{id_sensor}, Valor #{row[0]}"
     end
   end
 
   def getID(lat, lon, client)
-    max = 0
-    stm = @bd.prepare "Select distinct IDCLIENTE, GPSX, GPSY From leituras;"
+    stm = @bd.prepare "Select count(*) From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
     rs = stm.execute
-    while (row = rs.next) do
-        if max < row[0] then max = row[0] end
-        if (row[1] == lat.to_i and row[2] == lon.to_i) then
-          id = row[0]
-          client.puts "#{id},"
-          return id
-        end
+    row = rs.next
+    if row[0] >= 1 then
+      stm = @bd.prepare "Select IDCLIENTE From leituras Where GPSX = #{lat} and GPSY = #{lon} LIMIT 1;"
+      rs = stm.execute
+      row = rs.next
+      id = row.join "\s"
+      client.puts "#{id},"
+    else
+      stm = @bd.prepare "SELECT EXISTS(SELECT * FROM leituras);"
+      rs = stm.execute
+      row = rs.next
+      if row[0] == 1
+        stm = @bd.prepare "Select max(IDCLIENTE) From leituras;"
+        rs = stm.execute
+        row = rs.next
+        id = row[0] + 1
+        client.puts "#{id},"
+      else
+        id = 1
+        client.puts "#{id},"
+      end
     end
-    max = max + 1
-    client.puts "#{max},"
-    return max
+    return id
+
   end
 
   def lerMensagem(id, lat, lon, client) #O servidor descodifica a mensagem
@@ -102,7 +113,7 @@ class Server
 
   def bdTemp(leitura, id, lat, lon) #insere uma leitura de temperatura
     temp, timezone = leitura.split(",")
-    tipo = 1
+    tipo = 2
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
     Thread.current['@n_of_reads'] = Thread.current['@n_of_reads'] + 1
@@ -110,7 +121,7 @@ class Server
 
   def bdAco(leitura, id, lat, lon) #insere uma leitura de acustica
     temp, timezone = leitura.split(",")
-    tipo = 2
+    tipo = 1
     @bd.execute("INSERT INTO leituras (IDCLIENTE, IDSENSOR, VALUE, GPSX, GPSY, TIMESTAMP)
 			VALUES (?, ?, ?, ?, ?, ?);", id, tipo, temp, lat.to_i, lon.to_i, timezone)
     Thread.current['@n_of_reads'] = Thread.current['@n_of_reads'] + 1
