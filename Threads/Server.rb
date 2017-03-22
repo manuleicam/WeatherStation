@@ -63,11 +63,10 @@ class Server
 
   def getSensorValues(id_client,id_sensor)
     puts "Valores Sensores"
-    stm = @bd.prepare "Select Value From leituras Where IDCLIENTE = #{id_client} and IDSENSOR = #{id_sensor}"
+    stm = @bd.prepare "Select Value From leituras Where IDCLIENTE = #{id_client} and IDSENSOR = #{id_sensor};"
     rs = stm.execute
-    while(rs.next)
-      row = rs.next
-      puts "IDSENSOR:#{id_sensor}, Valor #{row[0][0]}"
+    while(row=rs.next)
+      puts "IDSENSOR:#{id_sensor}, Valor #{row[0]}"
     end
   end
 

@@ -75,7 +75,6 @@ class Client
     @disconnect_flag = true
     @clientSocket.close
     Thread.exit
-    puts "5"
   end
 
   def connect
